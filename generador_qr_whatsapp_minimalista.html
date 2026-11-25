@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador QR WhatsApp - Baja Densidad para Impresión</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería QRCode Generator (ligera y con control exacto de niveles y SVG/Canvas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Patrón sutil de fondo para visualizar transparencia */
+        .checkerboard {
+            background-color: #ffffff;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Encabezado -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 7h3v3H7V7zm7 0h3v3h-3V7zM7 14h3v3H7v-3zm7 3h3m-3-3h1m2 0h0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">QR Minimalista para Impresión</h1>
+                    <p class="text-xs text-slate-500">Optimizado con pocos cuadros para tarjetas de presentación</p>
+                </div>
+            </div>
+            <span class="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Escaneo rápido garantizado
+            </span>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-8 flex-grow">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Panel Izquierdo: Controles -->
+            <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">1. Datos de WhatsApp</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Usamos el enlace corto <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">wa.me</code> para reducir la cantidad de cuadritos.</p>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="countryCode" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Código País</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-medium">+</span>
+                            <input type="text" id="countryCode" value="503" maxlength="4"
+                                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                                placeholder="503">
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="phoneNumber" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Número de WhatsApp</label>
+                        <input type="text" id="phoneNumber" value=""
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                            placeholder="Ej. 7777-8007">
+                    </div>
+                </div>
+
+                <!-- Mensaje Predefinido -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label for="messageText" class="block text-xs font-semibold uppercase tracking-wider text-slate-600">Mensaje al abrir el chat</label>
+                        <span id="charCount" class="text-xs font-medium text-emerald-600">24 caracteres (Óptimo)</span>
+                    </div>
+                    <textarea id="messageText" rows="2"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none"
+                        placeholder="Ej. Hola, quiero agendar mantenimiento para mi moto">Hola, info de mantenimiento</textarea>
+                    <p class="text-xs text-slate-500 mt-1.5">
+                        💡 <strong>Tip de densidad:</strong> Mientras más corto sea este texto (menos de 30 letras), más grandes y separados quedarán los cuadros del QR.
+                    </p>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <!-- Estilo Visual (como la imagen 2) -->
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 mb-3">2. Estilo y Tamaño de Impresión</h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Marco tipo escáner -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <span class="block text-sm font-semibold text-slate-800">Esquinas de enfoque</span>
+                                <span class="text-xs text-slate-500">Como tu imagen de muestra</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="showFrame" checked class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Color de las esquinas -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <span class="block text-sm font-semibold text-slate-800">Color de esquinas</span>
+                                <span class="text-xs text-slate-500">Rojo, verde tarjeta o negro</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" data-color="#e13b17" class="color-preset w-6 h-6 rounded-full bg-[#e13b17] ring-2 ring-offset-2 ring-slate-400 transition" title="Naranja/Rojo muestra"></button>
+                                <button type="button" data-color="#2e6f1e" class="color-preset w-6 h-6 rounded-full bg-[#2e6f1e] transition" title="Verde de tu tarjeta"></button>
+                                <button type="button" data-color="#111827" class="color-preset w-6 h-6 rounded-full bg-[#111827] transition" title="Negro"></button>
+                                <input type="color" id="frameColor" value="#e13b17" class="w-7 h-7 p-0 border-0 rounded cursor-pointer bg-transparent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nivel de Corrección de Errores -->
+                    <div class="mt-4">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Densidad de cuadritos (Corrección de error)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" data-ecc="L" class="ecc-btn py-2 px-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 text-xs font-bold text-center transition">
+                                Mínima (Recomendada)
+                                <span class="block font-normal text-[11px] opacity-80">Cuadros más grandes</span>
+                            </button>
+                            <button type="button" data-ecc="M" class="ecc-btn py-2 px-3 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold text-center hover:bg-slate-50 transition">
+                                Media
+                                <span class="block font-normal text-[11px] opacity-80">Equilibrado</span>
+                            </button>
+                            <button type="button" data-ecc="Q" class="ecc-btn py-2 px-3 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold text-center hover:bg-slate-50 transition">
+                                Alta
+                                <span class="block font-normal text-[11px] opacity-80">Más cuadritos</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Texto inferior opcional -->
+                    <div class="mt-4">
+                        <label for="bottomLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Texto debajo del QR (Opcional)</label>
+                        <input type="text" id="bottomLabel" value="ESCRÍBENOS" maxlength="20"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-semibold text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                            placeholder="Ej. ESCRÍBENOS (dejar vacío para quitar)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Derecho: Vista Previa y Descarga -->
+            <div class="lg:col-span-5 space-y-5">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center">
+                    <div class="w-full flex items-center justify-between mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Vista Previa Real</span>
+                        <span id="matrixBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                            Matriz: 25 × 25 cuadros
+                        </span>
+                    </div>
+
+                    <!-- Contenedor del Canvas QR -->
+                    <div class="w-full max-w-[290px] aspect-square checkerboard rounded-2xl border border-slate-200 p-4 flex items-center justify-center shadow-inner">
+                        <canvas id="qrCanvas" class="w-full h-full object-contain"></canvas>
+                    </div>
+
+                    <!-- Prueba de tamaño real en tarjeta (1.8 cm aprox) -->
+                    <div class="mt-5 w-full bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between">
+                        <div class="text-xs text-slate-600">
+                            <span class="font-semibold text-slate-800 block">Simulación tamaño tarjeta:</span>
+                            Así se verá impreso en pequeño (~1.8 cm). ¡Pruébalo con la cámara de tu celular ahora mismo!
+                        </div>
+                        <div class="w-14 h-14 bg-white p-1 rounded border border-slate-300 shrink-0 ml-3 flex items-center justify-center">
+                            <img id="miniPreview" alt="Vista previa mini" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+
+                    <!-- Enlace generado -->
+                    <div class="mt-4 w-full">
+                        <div class="flex items-center justify-between bg-slate-100 rounded-xl px-3 py-2 border border-slate-200">
+                            <span id="generatedUrl" class="text-xs text-slate-600 truncate font-mono mr-2">https://wa.me/50361218007</span>
+                            <button type="button" id="copyUrlBtn" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 shrink-0 px-2 py-1 rounded bg-white shadow-sm border border-slate-200 active:scale-95 transition">
+                                Copiar link
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Descarga -->
+                    <div class="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" id="downloadPngBtn"
+                            class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Descargar PNG
+                        </button>
+                        <button type="button" id="downloadSvgBtn"
+                            class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            Vector SVG (Imprenta)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notificación flotante (reemplazo elegante de alert) -->
+                <div id="toastMessage" class="hidden bg-slate-900 text-white text-xs font-medium py-2.5 px-4 rounded-xl text-center shadow-lg transition-opacity">
+                    ¡Enlace copiado al portapapeles!
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-4 text-xs text-slate-400 border-t border-slate-200 bg-white">
+        Generador QR de alta legibilidad • Exportación en Alta Resolución (1200×1200 px) y Vector SVG
+    </footer>
+
+    <script>
+        // Estado global de la aplicación
+        const state = {
+            countryCode: '503',
+            phoneNumber: '6121-8007',
+            messageText: 'Hola, info de mantenimiento',
+            showFrame: true,
+            frameColor: '#e13b17',
+            eccLevel: 'L', // 'L' = 7% (menos cuadritos), 'M' = 15%, 'Q' = 25%
+            bottomLabel: 'ESCRÍBENOS'
+        };
+
+        // Referencias del DOM
+        const els = {
+            countryCode: document.getElementById('countryCode'),
+            phoneNumber: document.getElementById('phoneNumber'),
+            messageText: document.getElementById('messageText'),
+            charCount: document.getElementById('charCount'),
+            showFrame: document.getElementById('showFrame'),
+            frameColor: document.getElementById('frameColor'),
+            bottomLabel: document.getElementById('bottomLabel'),
+            qrCanvas: document.getElementById('qrCanvas'),
+            miniPreview: document.getElementById('miniPreview'),
+            matrixBadge: document.getElementById('matrixBadge'),
+            generatedUrl: document.getElementById('generatedUrl'),
+            copyUrlBtn: document.getElementById('copyUrlBtn'),
+            downloadPngBtn: document.getElementById('downloadPngBtn'),
+            downloadSvgBtn: document.getElementById('downloadSvgBtn'),
+            toastMessage: document.getElementById('toastMessage'),
+            eccBtns: document.querySelectorAll('.ecc-btn'),
+            colorPresets: document.querySelectorAll('.color-preset')
+        };
+
+        // Mostrar notificación temporal sin usar alert()
+        function showToast(msg) {
+            els.toastMessage.textContent = msg;
+            els.toastMessage.classList.remove('hidden');
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                els.toastMessage.classList.add('hidden');
+            }, 2500);
+        }
+
+        // Construir URL corta de WhatsApp limpia
+        function buildWhatsAppUrl() {
+            const cleanCode = state.countryCode.replace(/\D/g, '');
+            const cleanPhone = state.phoneNumber.replace(/\D/g, '');
+            const fullNumber = cleanCode + cleanPhone;
+            const trimmedMsg = state.messageText.trim();
+
+            if (!fullNumber) return 'https://wa.me/';
+            if (!trimmedMsg) return `https://wa.me/${fullNumber}`;
+
+            // encodeURIComponent mantiene el enlace estándar y compatible
+            return `https://wa.me/${fullNumber}?text=${encodeURIComponent(trimmedMsg)}`;
+        }
+
+        // Generar objeto matriz QR usando qrcode-generator
+        function createQrMatrix(url, ecc) {
+            // Tipo 0 = autodetección de la versión más pequeña posible
+            const qr = qrcode(0, ecc);
+            qr.addData(url);
+            qr.make();
+            return qr;
+        }
+
+        // Dibujar línea redondeada en Canvas (para las esquinas tipo escáner)
+        function drawRoundedCorner(ctx, x1, y1, cx, cy, x2, y2, radius, lineWidth, color) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.arcTo(cx, cy, x2, y2, radius);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Renderizar el QR completo en el Canvas de alta resolución
+        function renderQR() {
+            try {
+                const url = buildWhatsAppUrl();
+                els.generatedUrl.textContent = url;
+
+                // Actualizar contador de caracteres
+                const len = state.messageText.trim().length;
+                if (len === 0) {
+                    els.charCount.textContent = 'Sin texto (Ultra compacto)';
+                    els.charCount.className = 'text-xs font-medium text-emerald-600';
+                } else if (len <= 30) {
+                    els.charCount.textContent = `${len} caracteres (Óptimo)`;
+                    els.charCount.className = 'text-xs font-medium text-emerald-600';
+                } else if (len <= 60) {
+                    els.charCount.textContent = `${len} caracteres (Medio)`;
+                    els.charCount.className = 'text-xs font-medium text-amber-600';
+                } else {
+                    els.charCount.textContent = `${len} caracteres (Muchos cuadros)`;
+                    els.charCount.className = 'text-xs font-medium text-rose-600';
+                }
+
+                const qr = createQrMatrix(url, state.eccLevel);
+                const moduleCount = qr.getModuleCount();
+                els.matrixBadge.textContent = `Matriz: ${moduleCount} × ${moduleCount} cuadros`;
+
+                // Resolución alta (1200px) para que al imprimir salga súper nítido
+                const size = 1200;
+                const hasLabel = state.bottomLabel.trim().length > 0;
+                const labelHeight = hasLabel ? 110 : 0;
+
+                const canvas = els.qrCanvas;
+                canvas.width = size;
+                canvas.height = size + labelHeight;
+                const ctx = canvas.getContext('2d');
+
+                // Fondo blanco sólido (indispensable para que la cámara lea bien el contraste)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Márgenes internos
+                const outerPadding = state.showFrame ? 150 : 90;
+                const qrAreaSize = size - (outerPadding * 2);
+                const cellSize = qrAreaSize / moduleCount;
+
+                // Dibujar los módulos (cuadritos) del QR
+                ctx.fillStyle = '#000000';
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        if (qr.isDark(row, col)) {
+                            // Usar Math.floor/ceil evita líneas blancas fantasma entre cuadros
+                            const x = Math.floor(outerPadding + col * cellSize);
+                            const y = Math.floor(outerPadding + row * cellSize);
+                            const w = Math.ceil(outerPadding + (col + 1) * cellSize) - x;
+                            const h = Math.ceil(outerPadding + (row + 1) * cellSize) - y;
+                            ctx.fillRect(x, y, w, h);
+                        }
+                    }
+                }
+
+                // Dibujar esquinas estilo escáner (como la segunda imagen)
+                if (state.showFrame) {
+                    const frameOffset = 68;
+                    const bracketLen = 165;
+                    const strokeW = 28;
+                    const cornerRad = 24;
+                    const min = frameOffset;
+                    const max = size - frameOffset;
+
+                    // Superior Izquierda
+                    drawRoundedCorner(ctx, min, min + bracketLen, min, min, min + bracketLen, min, cornerRad, strokeW, state.frameColor);
+                    // Superior Derecha
+                    drawRoundedCorner(ctx, max - bracketLen, min, max, min, max, min + bracketLen, cornerRad, strokeW, state.frameColor);
+                    // Inferior Izquierda
+                    drawRoundedCorner(ctx, min, max - bracketLen, min, max, min + bracketLen, max, cornerRad, strokeW, state.frameColor);
+                    // Inferior Derecha
+                    drawRoundedCorner(ctx, max - bracketLen, max, max, max, max, max - bracketLen, cornerRad, strokeW, state.frameColor);
+                }
+
+                // Dibujar texto inferior si existe
+                if (hasLabel) {
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '800 68px Inter, Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(state.bottomLabel.trim().toUpperCase(), size / 2, size + (labelHeight / 2) - 18);
+                }
+
+                // Actualizar miniatura de simulación real
+                els.miniPreview.src = canvas.toDataURL('image/png');
+            } catch (err) {
+                console.error('Error generando QR:', err);
+            }
+        }
+
+        // Generar archivo SVG vectorial puro (ideal para diseñadores e imprenta)
+        function generateSVGString() {
+            const url = buildWhatsAppUrl();
+            const qr = createQrMatrix(url, state.eccLevel);
+            const moduleCount = qr.getModuleCount();
+
+            const size = 1000;
+            const hasLabel = state.bottomLabel.trim().length > 0;
+            const labelHeight = hasLabel ? 90 : 0;
+            const totalHeight = size + labelHeight;
+
+            const outerPadding = state.showFrame ? 125 : 75;
+            const qrAreaSize = size - (outerPadding * 2);
+            const cellSize = qrAreaSize / moduleCount;
+
+            let rects = '';
+            for (let row = 0; row < moduleCount; row++) {
+                for (let col = 0; col < moduleCount; col++) {
+                    if (qr.isDark(row, col)) {
+                        const x = (outerPadding + col * cellSize).toFixed(2);
+                        const y = (outerPadding + row * cellSize).toFixed(2);
+                        const w = (cellSize + 0.05).toFixed(2); // ligero solapamiento evita grietas vectoriales
+                        rects += `<rect x="${x}" y="${y}" width="${w}" height="${w}" fill="#000000"/>`;
+                    }
+                }
+            }
+
+            let frameSvg = '';
+            if (state.showFrame) {
+                const f = 56;
+                const len = 140;
+                const sw = 24;
+                const r = 20;
+                const m = size - f;
+                frameSvg = `
+                    <g fill="none" stroke="${state.frameColor}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M ${f} ${f + len} L ${f} ${f + r} Q ${f} ${f} ${f + r} ${f} L ${f + len} ${f}" />
+                        <path d="M ${m - len} ${f} L ${m - r} ${f} Q ${m} ${f} ${m} ${f + r} L ${m} ${f + len}" />
+                        <path d="M ${f} ${m - len} L ${f} ${m - r} Q ${f} ${m} ${f + r} ${m} L ${f + len} ${m}" />
+                        <path d="M ${m - len} ${m} L ${m - r} ${m} Q ${m} ${m} ${m} ${m - r} L ${m} ${m - len}" />
+                    </g>
+                `;
+            }
+
+            let labelSvg = '';
+            if (hasLabel) {
+                const safeText = state.bottomLabel.trim().toUpperCase()
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                labelSvg = `<text x="${size / 2}" y="${size + 42}" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="56" fill="#000000" text-anchor="middle">${safeText}</text>`;
+            }
+
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${totalHeight}" width="${size}" height="${totalHeight}">
+    <rect width="100%" height="100%" fill="#ffffff"/>
+    ${rects}
+    ${frameSvg}
+    ${labelSvg}
+</svg>`;
+        }
+
+        // Eventos de entrada
+        els.countryCode.addEventListener('input', (e) => {
+            state.countryCode = e.target.value;
+            renderQR();
+        });
+
+        els.phoneNumber.addEventListener('input', (e) => {
+            state.phoneNumber = e.target.value;
+            renderQR();
+        });
+
+        els.messageText.addEventListener('input', (e) => {
+            state.messageText = e.target.value;
+            renderQR();
+        });
+
+        els.showFrame.addEventListener('change', (e) => {
+            state.showFrame = e.target.checked;
+            renderQR();
+        });
+
+        els.frameColor.addEventListener('input', (e) => {
+            state.frameColor = e.target.value;
+            renderQR();
+        });
+
+        els.bottomLabel.addEventListener('input', (e) => {
+            state.bottomLabel = e.target.value;
+            renderQR();
+        });
+
+        // Presets de colores
+        els.colorPresets.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.dataset.color;
+                state.frameColor = color;
+                els.frameColor.value = color;
+                els.colorPresets.forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-400'));
+                btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-400');
+                renderQR();
+            });
+        });
+
+        // Botones de densidad / corrección de errores
+        els.eccBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.eccLevel = btn.dataset.ecc;
+                els.eccBtns.forEach(b => {
+                    b.className = 'ecc-btn py-2 px-3 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold text-center hover:bg-slate-50 transition';
+                });
+                btn.className = 'ecc-btn py-2 px-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 text-xs font-bold text-center transition';
+                renderQR();
+            });
+        });
+
+        // Copiar enlace usando execCommand para máxima compatibilidad en iframes
+        els.copyUrlBtn.addEventListener('click', () => {
+            const tempInput = document.createElement('input');
+            tempInput.value = buildWhatsAppUrl();
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('¡Enlace corto copiado al portapapeles!');
+        });
+
+        // Descargar PNG de alta resolución
+        els.downloadPngBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            const cleanNum = state.phoneNumber.replace(/\D/g, '') || 'whatsapp';
+            link.download = `QR-WhatsApp-${cleanNum}.png`;
+            link.href = els.qrCanvas.toDataURL('image/png');
+            link.click();
+            showToast('Descargando imagen PNG de alta calidad...');
+        });
+
+        // Descargar SVG Vectorial
+        els.downloadSvgBtn.addEventListener('click', () => {
+            const svgData = generateSVGString();
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const cleanNum = state.phoneNumber.replace(/\D/g, '') || 'whatsapp';
+            link.download = `QR-WhatsApp-${cleanNum}.svg`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('Descargando archivo vectorial SVG...');
+        });
+
+        // Inicializar al cargar
+        window.addEventListener('DOMContentLoaded', renderQR);
+    </script>
+</body>
+</html>
